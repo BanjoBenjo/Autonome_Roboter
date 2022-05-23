@@ -2,7 +2,8 @@
 import rospy
 from husky_highlevel_controller import util
 from sensor_msgs.msg import LaserScan
-from geometry_msgs.msg import Twist, Vector3, TransformStamped, PointStamped
+from geometry_msgs.msg import Twist, Vector3
+from tf2_geometry_msgs import PointStamped
 from visualization_msgs.msg import Marker
 import tf2_ros
 
@@ -28,7 +29,7 @@ class Controller():
 
         # tf2 buffer, listener and broadcaster
         self.tfBuffer = tf2_ros.Buffer()
-        self.listener = tf2_ros.TransformListener(self.tfBuffer)
+        self.tflistener = tf2_ros.TransformListener(self.tfBuffer)
 
 
     def laser_callback(self, data):
@@ -83,7 +84,6 @@ class Controller():
         marker.pose.position.x = x
         marker.pose.position.y = y
         marker.pose.position.z = 0
-
         self.marker_publisher.publish(marker)
 
     def get_vector3(self, x=0, y=0, z=0):
@@ -96,14 +96,18 @@ class Controller():
 
     def tf_laser_to_odom(self, laser_x, laser_y):
         try:
+            #trans = self.tfBuffer.lookup_transform('base_laser', 'odom', rospy.Time())
+
             laser_point = PointStamped()
             laser_point.header.frame_id = "base_laser"
             laser_point.header.stamp = rospy.Time()
             laser_point.point.x= laser_x
             laser_point.point.y= laser_y
             laser_point.point.z= 0.0
+            laser_point.header.stamp = rospy.Time(0)
 
-            p = self.tfBuffer.transform(laser_point, "odom")
+            #p = self.tfBuffer.transform(laser_point, "odom")
+            p = self.tfBuffer.transform(laser_point, "odom", timeout=rospy.Duration(10.0))
 
             self.publish_marker(p.point.x, p.point.y, "odom")
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
