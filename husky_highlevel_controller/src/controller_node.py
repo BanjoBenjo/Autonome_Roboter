@@ -2,7 +2,10 @@
 import rospy
 from husky_highlevel_controller import util
 from sensor_msgs.msg import LaserScan
-from geometry_msgs.msg import Twist, Vector3
+from geometry_msgs.msg import Twist, Vector3, TransformStamped, PointStamped
+from visualization_msgs.msg import Marker
+import tf2_ros
+
 import numpy as np
 import math
 
@@ -14,11 +17,19 @@ class Controller():
 
         # Create Subscirber
         rospy.Subscriber(laser_topic_name, LaserScan, callback=self.laser_callback, queue_size=laser_queue_size)
-
+      
         # Create publisher
         self.scan_publisher = rospy.Publisher("scan_filtered", LaserScan, queue_size=1)
         self.cmd_vel_publisher = rospy.Publisher("cmd_vel", Twist, queue_size=1)
-        
+        self.marker_publisher = rospy.Publisher("visualization_marker", Marker, queue_size=1)
+
+        self.current_angle = 0
+        self.current_position = None
+
+        # tf2 buffer, listener and broadcaster
+        self.tfBuffer = tf2_ros.Buffer()
+        self.listener = tf2_ros.TransformListener(self.tfBuffer)
+
 
     def laser_callback(self, data):
         filtered_msg = util.filter_scan(data)
@@ -33,8 +44,13 @@ class Controller():
         mid_index = math.floor(len(filtered_msg.ranges)/2)
         range = filtered_msg.ranges[mid_index]
         angle_rad = angle_min + angle_increment * mid_index
+        angle_deg = self.rad_to_deg(angle_rad)
 
-        angle_deg = angle_rad * 180 / np.pi
+        x, y = self.polar_to_karth(range, angle_rad)
+
+        self.tf_laser_to_odom(x,y)
+
+        #self.publish_marker(x,y, "base_laser")
 
         if abs(angle_deg) > 5:
             self.send_drive_cmd(angle= -np.sign(angle_deg) * 0.2)
@@ -43,6 +59,32 @@ class Controller():
         else:
             self.send_drive_cmd(speed=0)
 
+    def rad_to_deg(self, rad):
+        return rad * 180 / np.pi
+
+    def polar_to_karth(self, r, phi):
+        x = r * np.cos(phi)
+        y = r * np.sin(phi)
+        return x, y
+
+    def publish_marker(self, x, y, frame):
+        marker = Marker()
+        marker.header.frame_id = frame
+        marker.type = marker.CYLINDER
+        marker.action = marker.ADD
+        marker.scale.x = 0.2
+        marker.scale.y = 0.2
+        marker.scale.z = 0.2
+        marker.color.a = 1.0
+        marker.color.r = 1.0
+        marker.color.g = 0
+        marker.color.b = 0
+        marker.pose.orientation.w = 1.0
+        marker.pose.position.x = x
+        marker.pose.position.y = y
+        marker.pose.position.z = 0
+
+        self.marker_publisher.publish(marker)
 
     def get_vector3(self, x=0, y=0, z=0):
         vector = Vector3()
@@ -52,6 +94,22 @@ class Controller():
 
         return vector
 
+    def tf_laser_to_odom(self, laser_x, laser_y):
+        try:
+            laser_point = PointStamped()
+            laser_point.header.frame_id = "base_laser"
+            laser_point.header.stamp = rospy.Time()
+            laser_point.point.x= laser_x
+            laser_point.point.y= laser_y
+            laser_point.point.z= 0.0
+
+            p = self.tfBuffer.transform(laser_point, "odom")
+
+            self.publish_marker(p.point.x, p.point.y, "odom")
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+            pass
+
+   
 
     def send_drive_cmd(self, speed=0, angle=0):
         twist_msg = Twist()
