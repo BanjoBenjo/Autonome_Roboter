@@ -206,6 +206,14 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: visualization_marker
+      Name: Marker
+      Namespaces:
+        "": true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -234,7 +242,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.9525458812713623
+      Distance: 7.9280805587768555
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -250,9 +258,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.9103977084159851
+      Pitch: 0.3753981292247772
       Target Frame: <Fixed Frame>
-      Yaw: 5.828586101531982
+      Yaw: 2.7435803413391113
     Saved: ~
 Window Geometry:
   Displays:
@@ -270,5 +278,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1440
-  X: 0
-  Y: 360
+  X: 72
+  Y: 270
