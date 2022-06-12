@@ -1,0 +1,9 @@
+# Goal
+float32 x
+float32 y
+---
+# Result
+uint32 result
+---
+# Feedback
+float32 percent_complete
