@@ -1,2 +1,4 @@
 topic_name: "scan"
 queue_size: 10
+angle_diff: 5
+stopping_distance: 0.5

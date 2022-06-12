@@ -15,6 +15,8 @@ class Controller():
         # load parameter
         laser_queue_size = rospy.get_param("/queue_size")
         laser_topic_name = rospy.get_param("/topic_name")
+        self.angle_diff = rospy.get_param("/angle_diff")
+        self.sopping_distance = rospy.get_param("/stopping_distance")
 
         # Create Subscriber
         rospy.Subscriber(laser_topic_name, LaserScan, callback=self.laser_callback, queue_size=laser_queue_size)
@@ -50,6 +52,8 @@ class Controller():
 
         # calculate x,y coordinates of nearest points (laser_frame)
         laser_x, laser_y = self.polar_to_karth(range, angle_rad)
+        #self.publish_marker(laser_x, laser_y, "base_laser")
+
         # transform coordinates from laser frame to odom
         odom_x, odom_y = self.tf_laser_to_odom(laser_x, laser_y)
 
@@ -57,9 +61,9 @@ class Controller():
             self.publish_marker(odom_x, odom_y, "odom")
 
         # orient and drive Robo to nearest point
-        if abs(angle_deg) > 5:
+        if abs(angle_deg) > self.angle_diff:
             self.send_drive_cmd(angle= -np.sign(angle_deg) * 0.2)
-        elif range > 0.5:
+        elif range > self.sopping_distance:
             self.send_drive_cmd(speed=0.5)
         else:
             self.send_drive_cmd(speed=0)
