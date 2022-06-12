@@ -15,6 +15,8 @@ class Drive():
         # load parameter
         target_queue_size = rospy.get_param("/target_queue_size")
         target_topic_name = rospy.get_param("/target_topic_name")
+        self.angle_diff = rospy.get_param("/angle_diff")
+        self.stopping_distance = rospy.get_param("/stopping_distance")
 
         # Create Subscriber
         rospy.Subscriber(target_topic_name, Target, callback=self.target_callback, queue_size=target_queue_size)
@@ -48,9 +50,9 @@ class Drive():
             self.publish_marker(odom_x, odom_y, "odom")
 
         # orient and drive Robo to nearest point
-        if abs(angle_deg) > 5:
+        if abs(angle_deg) > self.angle_diff:
             self.send_drive_cmd(angle= -np.sign(angle_deg) * 0.2)
-        elif range > 0.5:
+        elif range > self.stopping_distance:
             self.send_drive_cmd(speed=0.5)
         else:
             self.send_drive_cmd(speed=0)
