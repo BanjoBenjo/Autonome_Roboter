@@ -2,7 +2,7 @@
 <launch>
     <rosparam file="$(find husky_highlevel_controller)/config/params.yaml" />
 
-    <node name="husky_controller" pkg="husky_highlevel_controller" type="controller_node.py" output="screen"/>
+    <node name="laser_scan" pkg="husky_highlevel_controller" type="controller_node.py" output="screen"/>
     <node name="husky_target_drive" pkg="husky_highlevel_controller" type="target_drive_node.py" output="screen"/>
     <node pkg="rviz" type="rviz" name="rviz" args="-d $(find husky_highlevel_controller)/config/config.rviz"/>
 

@@ -38,6 +38,8 @@ class Drive():
         range = target_msg.range
         angle = target_msg.angle
 
+        print(target_msg)
+
         # convert radian angle to degree
         angle_deg = self.rad_to_deg(angle)
 
@@ -115,7 +117,7 @@ class Drive():
 
 
 if __name__ == '__main__':
-    rospy.init_node('husky_highlevel_controller')
+    rospy.init_node('target_drive')
     controller = Drive()
 
     # Eport Env Variable so LaserScan is available

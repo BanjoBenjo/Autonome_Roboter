@@ -2,6 +2,7 @@
 import rospy
 import tf2_ros
 from sensor_msgs.msg import LaserScan
+from std_msgs.msg import Header
 from visualization_msgs.msg import Marker
 from husky_highlevel_controller import util
 from husky_highlevel_controller.msg import Target
@@ -48,6 +49,7 @@ class Controller():
 
     def publish_target(self, range, angle):
         target_msg = Target()
+        target_msg.header = Header()
         target_msg.header.frame_id = "base_laser"
         target_msg.range = range
         target_msg.angle = angle
@@ -55,7 +57,7 @@ class Controller():
 
 
 if __name__ == '__main__':
-    rospy.init_node('husky_highlevel_controller')
+    rospy.init_node('laser_scan')
     controller = Controller()
 
     # Eport Env Variable so LaserScan is available

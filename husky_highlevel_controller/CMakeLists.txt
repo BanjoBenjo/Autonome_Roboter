@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib_msgs
   actionlib
   message_generation
+  std_msgs
   sensor_msgs
   geometry_msgs
 )
@@ -73,6 +74,7 @@ add_action_files(
  generate_messages(
    DEPENDENCIES
    actionlib_msgs
+   std_msgs
 #  sensor_msgs
  )
 
@@ -108,7 +110,7 @@ add_action_files(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES husky_highlevel_controller
-   CATKIN_DEPENDS roscpp rospy message_runtime
+   CATKIN_DEPENDS roscpp rospy message_runtime std_msgs
 #  DEPENDS system_lib
 )
 
