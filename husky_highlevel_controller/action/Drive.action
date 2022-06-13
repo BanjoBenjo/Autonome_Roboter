@@ -2,7 +2,7 @@
 bool start
 ---
 # Result
-uint32 result
+bool result
 ---
 # Feedback
 float32 percent_complete

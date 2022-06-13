@@ -35,35 +35,27 @@ class Drive():
         self.current_angle = 0
         self.current_position = None
         self.drive = False
-        self.angle_deg = None
-        self.range = None
+
 
         # tf2 buffer and listener
         self.tfBuffer = tf2_ros.Buffer()
         self.tflistener = tf2_ros.TransformListener(self.tfBuffer)
 
     def execute(self, goal):
+        self.server.accept_new_goal()
         print("in execute")
-        if abs(self.angle_deg) > self.angle_diff:
-            self.send_drive_cmd(angle= -np.sign(self.angle_deg) * 0.2)
-        elif self.range > self.stopping_distance:
-            self.send_drive_cmd(speed=0.5)
-        else:
-            self.send_drive_cmd(speed=0)
-
-        print("finished")
+        self.drive = True
 
     def cancel(self):
         print("in cancel")
-        self.send_drive_cmd(speed=0)
+        self.drive = False
 
     def target_callback(self, target_msg):
         angle = target_msg.angle
         range = target_msg.range
 
         # convert radian angle to degree
-        self.angle_deg = self.rad_to_deg(angle)
-        self.range = range
+        angle_deg = self.rad_to_deg(angle)
 
         # calculate x,y coordinates of nearest points (laser_frame)
         laser_x, laser_y = self.polar_to_karth(range, angle)
@@ -72,6 +64,16 @@ class Drive():
 
         if odom_x and odom_y :
             self.publish_marker(odom_x, odom_y, "odom")
+
+        if self.drive:
+            if abs(angle_deg) > self.angle_diff:
+                self.send_drive_cmd(angle= -np.sign(angle_deg) * 0.2)
+            elif range > self.stopping_distance:
+                self.send_drive_cmd(speed=0.5)
+            else:
+                self.send_drive_cmd(speed=0)
+                self.drive = False
+                self.server.set_succeeded(True)
 
     def rad_to_deg(self, rad):
         return rad * 180 / np.pi

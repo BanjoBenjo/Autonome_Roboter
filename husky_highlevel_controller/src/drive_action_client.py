@@ -22,8 +22,9 @@ class Drive():
         goal.start = True
 
         self.client.send_goal(goal)
-        rospy.sleep(5)
-        self.client.cancel_goal()
+
+        # self.client.waitForResult()
+        # self.client.cancel_goal()
 
     def fb_callback(self):
         print("Feedback recieved")
