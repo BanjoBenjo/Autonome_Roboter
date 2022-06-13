@@ -1,6 +1,5 @@
 # Goal
-float32 x
-float32 y
+bool start
 ---
 # Result
 uint32 result

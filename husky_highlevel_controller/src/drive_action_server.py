@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
+
 import rospy
 import tf2_ros
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist, Vector3
 from tf2_geometry_msgs import PointStamped
 from visualization_msgs.msg import Marker
-from husky_highlevel_controller.msg import Target
+from husky_highlevel_controller.msg import Target, DriveAction 
+import actionlib
 
 import numpy as np
 import math
@@ -18,6 +20,11 @@ class Drive():
         self.angle_diff = rospy.get_param("/angle_diff")
         self.stopping_distance = rospy.get_param("/stopping_distance")
 
+        # Create Action Server
+        self.server = actionlib.SimpleActionServer('drive_to_target', DriveAction, self.execute, False)
+        self.server.register_preempt_callback(self.cancel)
+        self.server.start()
+
         # Create Subscriber
         rospy.Subscriber(target_topic_name, Target, callback=self.target_callback, queue_size=target_queue_size)
       
@@ -27,21 +34,36 @@ class Drive():
 
         self.current_angle = 0
         self.current_position = None
+        self.drive = False
+        self.angle_deg = None
+        self.range = None
 
         # tf2 buffer and listener
         self.tfBuffer = tf2_ros.Buffer()
         self.tflistener = tf2_ros.TransformListener(self.tfBuffer)
 
+    def execute(self, goal):
+        print("in execute")
+        if abs(self.angle_deg) > self.angle_diff:
+            self.send_drive_cmd(angle= -np.sign(self.angle_deg) * 0.2)
+        elif self.range > self.stopping_distance:
+            self.send_drive_cmd(speed=0.5)
+        else:
+            self.send_drive_cmd(speed=0)
+
+        print("finished")
+
+    def cancel(self):
+        print("in cancel")
+        self.send_drive_cmd(speed=0)
 
     def target_callback(self, target_msg):
-
-        range = target_msg.range
         angle = target_msg.angle
-
-        print(target_msg)
+        range = target_msg.range
 
         # convert radian angle to degree
-        angle_deg = self.rad_to_deg(angle)
+        self.angle_deg = self.rad_to_deg(angle)
+        self.range = range
 
         # calculate x,y coordinates of nearest points (laser_frame)
         laser_x, laser_y = self.polar_to_karth(range, angle)
@@ -50,14 +72,6 @@ class Drive():
 
         if odom_x and odom_y :
             self.publish_marker(odom_x, odom_y, "odom")
-
-        # orient and drive Robo to nearest point
-        if abs(angle_deg) > self.angle_diff:
-            self.send_drive_cmd(angle= -np.sign(angle_deg) * 0.2)
-        elif range > self.stopping_distance:
-            self.send_drive_cmd(speed=0.5)
-        else:
-            self.send_drive_cmd(speed=0)
 
     def rad_to_deg(self, rad):
         return rad * 180 / np.pi

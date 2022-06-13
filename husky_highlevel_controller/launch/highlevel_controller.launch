@@ -2,8 +2,9 @@
 <launch>
     <rosparam file="$(find husky_highlevel_controller)/config/params.yaml" />
 
-    <node name="laser_scan" pkg="husky_highlevel_controller" type="controller_node.py" output="screen"/>
-    <node name="husky_target_drive" pkg="husky_highlevel_controller" type="target_drive_node.py" output="screen"/>
+    <node name="laser_scan" pkg="husky_highlevel_controller" type="laser_filter.py" output="screen"/>
+    <node name="drive_action_client" pkg="husky_highlevel_controller" type="drive_action_client.py" output="screen"/>
+    <node name="drive_action_server" pkg="husky_highlevel_controller" type="drive_action_server.py" output="screen"/>
     <node pkg="rviz" type="rviz" name="rviz" args="-d $(find husky_highlevel_controller)/config/config.rviz"/>
 
     <include file="$(find husky_gazebo)/launch/husky_empty_world.launch">
