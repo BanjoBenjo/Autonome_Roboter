@@ -6,7 +6,7 @@ from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist, Vector3
 from tf2_geometry_msgs import PointStamped
 from visualization_msgs.msg import Marker
-from husky_highlevel_controller.msg import Target, DriveAction 
+from husky_highlevel_controller.msg import Target, DriveAction, DriveFeedback, DriveResult
 import actionlib
 
 import numpy as np
@@ -22,8 +22,7 @@ class Drive():
 
         # Create Action Server
         self.server = actionlib.SimpleActionServer('drive_to_target', DriveAction, self.execute, False)
-        self.server.register_preempt_callback(self.cancel)
-        self.server.start()
+        #self.server.register_preempt_callback(self.cancel)
 
         # Create Subscriber
         rospy.Subscriber(target_topic_name, Target, callback=self.target_callback, queue_size=target_queue_size)
@@ -32,48 +31,70 @@ class Drive():
         self.cmd_vel_publisher = rospy.Publisher("cmd_vel", Twist, queue_size=1)
         self.marker_publisher = rospy.Publisher("visualization_marker", Marker, queue_size=1)
 
-        self.current_angle = 0
+        self.range = 1000
+        self.angle_multiplier = 0
+        self.speed = 0
         self.current_position = None
         self.drive = False
-
 
         # tf2 buffer and listener
         self.tfBuffer = tf2_ros.Buffer()
         self.tflistener = tf2_ros.TransformListener(self.tfBuffer)
 
-    def execute(self, goal):
-        self.server.accept_new_goal()
-        print("in execute")
-        self.drive = True
+        rospy.loginfo('Starting action server...')
+        self.server.start()
+        rospy.loginfo('Started action server.')
 
-    def cancel(self):
-        print("in cancel")
-        self.drive = False
+    def execute(self, goal):
+        rospy.loginfo('Drive_to_target: Started')
+        self.speed = 0.5
+        self.angle_multiplier = 1
+
+        result = DriveResult()
+        feedback = DriveFeedback()
+        print('feedback', feedback)
+        print('result', result)
+        result.success = False
+        feedback.initial_distance = self.range
+
+        while (self.range > self.stopping_distance):
+            rospy.loginfo('Drive_to_target: Goal not reached')
+            feedback.remaining_distance = self.range
+            if (self.server.is_preempt_requested() or rospy.is_shutdown()):
+                rospy.loginfo('Drive_to_target: Preempted')
+                self.server.set_preempted()
+                result.success = False
+                self.speed = 0
+                self.angle_multiplier = 0
+            self.server.publish_feedback(feedback)
+
+        rospy.loginfo('Drive_to_target: Success')
+        self.server.set_succeeded(result)
+        self.speed = 0
+        self.angle_multiplier = 0
+
+    #def cancel(self):
+        #print("in cancel")
+        #self.drive = False
 
     def target_callback(self, target_msg):
+        rospy.loginfo('Received target angle', target_msg.angle)
+        rospy.loginfo('Received target range', target_msg.range)
         angle = target_msg.angle
-        range = target_msg.range
+        self.range = target_msg.range
 
         # convert radian angle to degree
         angle_deg = self.rad_to_deg(angle)
 
         # calculate x,y coordinates of nearest points (laser_frame)
-        laser_x, laser_y = self.polar_to_karth(range, angle)
+        laser_x, laser_y = self.polar_to_karth(self.range, angle)
         # transform coordinates from laser frame to odom
         odom_x, odom_y = self.tf_laser_to_odom(laser_x, laser_y)
 
         if odom_x and odom_y :
             self.publish_marker(odom_x, odom_y, "odom")
 
-        if self.drive:
-            if abs(angle_deg) > self.angle_diff:
-                self.send_drive_cmd(angle= -np.sign(angle_deg) * 0.2)
-            elif range > self.stopping_distance:
-                self.send_drive_cmd(speed=0.5)
-            else:
-                self.send_drive_cmd(speed=0)
-                self.drive = False
-                self.server.set_succeeded(True)
+        self.send_drive_cmd(speed=self.speed, angle=self.angle_multiplier * angle)
 
     def rad_to_deg(self, rad):
         return rad * 180 / np.pi
