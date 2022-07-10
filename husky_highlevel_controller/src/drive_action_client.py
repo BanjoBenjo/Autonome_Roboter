@@ -30,7 +30,8 @@ class Drive():
 
         if (finished_before_timeout):
             state = self.client.get_state()
-            rospy.loginfo("Action finished: %s", str(state.to_string()))
+            # rospy.loginfo("Action finished: %s", str(state.to_string()))
+            rospy.loginfo("Action finished: %d", state)
         else:
             rospy.loginfo('Action timed out.')
             self.client.cancel_goal()

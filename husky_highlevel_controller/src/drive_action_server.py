@@ -46,9 +46,12 @@ class Drive():
         rospy.loginfo('Started action server.')
 
     def execute(self, goal):
+        if not goal.start:
+            return
+            
         rospy.loginfo('Drive_to_target: Started')
         self.speed = 0.5
-        self.angle_multiplier = 1
+        self.angle_multiplier = -1
 
         result = DriveResult()
         feedback = DriveFeedback()
@@ -66,6 +69,7 @@ class Drive():
                 result.success = False
                 self.speed = 0
                 self.angle_multiplier = 0
+                return
             self.server.publish_feedback(feedback)
 
         rospy.loginfo('Drive_to_target: Success')
@@ -78,8 +82,8 @@ class Drive():
         #self.drive = False
 
     def target_callback(self, target_msg):
-        rospy.loginfo('Received target angle', target_msg.angle)
-        rospy.loginfo('Received target range', target_msg.range)
+        rospy.loginfo('Received target angle' + str(target_msg.angle))
+        rospy.loginfo('Received target range' + str(target_msg.range))
         angle = target_msg.angle
         self.range = target_msg.range
 
