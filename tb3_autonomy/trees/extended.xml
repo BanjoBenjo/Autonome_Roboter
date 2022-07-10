@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<root main_tree_to_execute="BehaviorTree">
+    <!-- ////////// -->
+    <BehaviorTree ID="BehaviorTree">
+        <Sequence name="root">
+            <Fallback name="search_item">
+                <Sequence name="search_location1">
+                    <Action ID="GoToPose" loc="location1" name="go_to_location1"/>
+                    <Condition ID="LookForObject" name="look_in_location1"/>
+                </Sequence>
+                <Sequence name="search_location2">
+                    <Action ID="GoToPose" loc="location2" name="go_to_location2"/>
+                    <Condition ID="LookForObject" name="look_in_location2"/>
+                </Sequence>
+                <Sequence name="search_location3">
+                    <Action ID="GoToPose" loc="location3" name="go_to_location3"/>
+                    <Condition ID="LookForObject" name="look_in_location3"/>
+                </Sequence>
+                <Sequence name="search_location3">
+                    <Action ID="GoToPose" loc="location4" name="go_to_location4"/>
+                    <Condition ID="LookForObject" name="look_in_location4"/>
+                </Sequence>
+            </Fallback>
+            <Sequence name="search_location3">
+                <Action ID="GoToPose" loc="location4" name="go_to_home"/>
+            </Sequence>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <TreeNodesModel>
+        <Action ID="GoToPose">
+            <input_port name="loc" type="std::string"/>
+        </Action>
+        <Condition ID="LookForObject"/>
+    </TreeNodesModel>
+    <!-- ////////// -->
+</root>
+
