@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<root main_tree_to_execute="BehaviorTree">
+    <!-- ////////// -->
+    <BehaviorTree ID="BehaviorTree">
+        <Fallback>
+            <Timeout msec="90">
+                <Sequence name="Tasks">
+                    <Sequence name="Statue">
+                        <Action ID="GoToPosition" name="GoTo Statue"/>
+                        <RetryUntilSuccessful num_attempts="3">
+                            <Sequence>
+                                <Action ID="ArmMove" name="Pick Statue"/>
+                                <Condition ID="SensorCheck"/>
+                            </Sequence>
+                        </RetryUntilSuccessful>
+                        <Action ID="ArmMove" name="Place Replica"/>
+                        <Action ID="ArmMove" name="Pick Samples"/>
+                    </Sequence>
+                    <Sequence name="Excavation Square">
+                        <Repeat num_cycles="10">
+                            <Sequence name="Single Squares">
+                                <Action ID="GoToPosition" name="Next Square"/>
+                                <IfThenElse name="If ResisotorValue ">
+                                    <Action ID="MeasureResistor"/>
+                                    <Action ID="ArmMove" name="Push Square"/>
+                                </IfThenElse>
+                            </Sequence>
+                        </Repeat>
+                    </Sequence>
+                    <Sequence name="Statue 2">
+                        <Action ID="GoToPosition" name="Display cabinet"/>
+                        <Action ID="ArmMove" name="Drop Statue"/>
+                    </Sequence>
+                    <Action ID="GoToPosition" name="Drive Home"/>
+                </Sequence>
+            </Timeout>
+            <Action ID="GoToPosition" name="Drive Home"/>
+        </Fallback>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <TreeNodesModel>
+        <Action ID="ArmMove"/>
+        <Action ID="GoToPosition"/>
+        <Action ID="MeasureResistor"/>
+        <Condition ID="SensorCheck"/>
+    </TreeNodesModel>
+    <!-- ////////// -->
+</root>
+
